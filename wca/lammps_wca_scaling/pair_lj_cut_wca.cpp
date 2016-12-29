@@ -15,10 +15,10 @@
    Contributing author: Paul Crozier (SNL)
 ------------------------------------------------------------------------- */
 
-#include "math.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "pair_lj_cut_wca.h"
 #include "atom.h"
 #include "comm.h"
@@ -60,7 +60,7 @@ PairLJCutWCA::~PairLJCutWCA()
     memory->destroy(lj3);
     memory->destroy(lj4);
     memory->destroy(offset);
- 
+
     // WCA scaling for attractive forces
     memory->destroy(scaling_rcut);
     memory->destroy(scaling_rcutsq);
@@ -136,16 +136,16 @@ void PairLJCutWCA::compute(int eflag, int vflag)
         }
 
         if (eflag) {
-          evdwl = r6inv*(lj3[itype][jtype]*r6inv-lj4[itype][jtype]);
-	  
+	  evdwl = r6inv*(lj3[itype][jtype]*r6inv-lj4[itype][jtype]);
+
 	  // WCA scaling for attractive force
 	  if( rsq >= scaling_rcutsq[itype][jtype] )
 	    evdwl *= lambda[itype][jtype];
 	  else
 	    evdwl += (1 - lambda[itype][jtype])*epsilon[itype][jtype];
-
-	  evdwl -= offset[itype][jtype];		
-	  evdwl *= factor_lj;
+	  
+	  evdwl -= offset[itype][jtype];
+          evdwl *= factor_lj;
         }
 
         if (evflag) ev_tally(i,j,nlocal,newton_pair,
@@ -163,7 +163,7 @@ void PairLJCutWCA::compute_inner()
 {
   int i,j,ii,jj,inum,jnum,itype,jtype;
   double xtmp,ytmp,ztmp,delx,dely,delz,fpair;
-  double rsq,r2inv,r6inv,forcelj,factor_lj,rsw; 
+  double rsq,r2inv,r6inv,forcelj,factor_lj,rsw;
   int *ilist,*jlist,*numneigh,**firstneigh;
 
   double **x = atom->x;
@@ -295,11 +295,11 @@ void PairLJCutWCA::compute_middle()
         jtype = type[j];
         forcelj = r6inv * (lj1[itype][jtype]*r6inv - lj2[itype][jtype]);
 
-	// WCA scaling for attractive force
+        // WCA scaling for attractive force
 	if( rsq >= scaling_rcutsq[itype][jtype] )
 	  forcelj *= lambda[itype][jtype];
 	
-	fpair = factor_lj*forcelj*r2inv;
+        fpair = factor_lj*forcelj*r2inv;
         if (rsq < cut_in_on_sq) {
           rsw = (sqrt(rsq) - cut_in_off)/cut_in_diff;
           fpair *= rsw*rsw*(3.0 - 2.0*rsw);
@@ -381,11 +381,11 @@ void PairLJCutWCA::compute_outer(int eflag, int vflag)
           r2inv = 1.0/rsq;
           r6inv = r2inv*r2inv*r2inv;
           forcelj = r6inv * (lj1[itype][jtype]*r6inv - lj2[itype][jtype]);
-	  
+
 	  // WCA scaling for attractive force
 	  if( rsq >= scaling_rcutsq[itype][jtype] )
 	    forcelj *= lambda[itype][jtype];
-
+	  
           fpair = factor_lj*forcelj*r2inv;
           if (rsq < cut_in_on_sq) {
             rsw = (sqrt(rsq) - cut_in_off)/cut_in_diff;
@@ -406,7 +406,7 @@ void PairLJCutWCA::compute_outer(int eflag, int vflag)
           r2inv = 1.0/rsq;
           r6inv = r2inv*r2inv*r2inv;
           evdwl = r6inv*(lj3[itype][jtype]*r6inv-lj4[itype][jtype]);
-
+	  
 	  // WCA scaling for attractive force
 	  if( rsq >= scaling_rcutsq[itype][jtype] )
 	    evdwl *= lambda[itype][jtype];
@@ -423,7 +423,7 @@ void PairLJCutWCA::compute_outer(int eflag, int vflag)
             r6inv = r2inv*r2inv*r2inv;
             forcelj = r6inv * (lj1[itype][jtype]*r6inv - lj2[itype][jtype]);
 
-	    // WCA scaling for attractive force
+            // WCA scaling for attractive force
 	    if( rsq >= scaling_rcutsq[itype][jtype] )
 		forcelj *= lambda[itype][jtype];
 	    
@@ -468,7 +468,6 @@ void PairLJCutWCA::allocate()
   memory->create(lambda,n+1,n+1,"pair:lambda");
   memory->create(scaling_rcut,n+1,n+1,"pair:scaling_rcut");
   memory->create(scaling_rcutsq,n+1,n+1,"pair:scaling_rcutsq");
-
 }
 
 /* ----------------------------------------------------------------------
@@ -477,15 +476,15 @@ void PairLJCutWCA::allocate()
 
 void PairLJCutWCA::settings(int narg, char **arg)
 {
-  if (narg < 1 || narg > 2)  error->all(FLERR,"Illegal pair_style command");
+  if (narg != 1) error->all(FLERR,"Illegal pair_style command");
 
   cut_global = force->numeric(FLERR,arg[0]);
 
   // reset cutoffs that have been explicitly set
- 
+
   if (narg < 2) lambda_default = 1.0;
   else lambda_default = force->numeric(FLERR,arg[1]);
-  
+
   if (allocated) {
     int i,j;
     for (i = 1; i <= atom->ntypes; i++)
@@ -500,13 +499,13 @@ void PairLJCutWCA::settings(int narg, char **arg)
 
 void PairLJCutWCA::coeff(int narg, char **arg)
 {
-  if (narg < 4 || narg > 6)
+  if (narg < 4 || narg > 5)
     error->all(FLERR,"Incorrect args for pair coefficients");
   if (!allocated) allocate();
 
   int ilo,ihi,jlo,jhi;
-  force->bounds(arg[0],atom->ntypes,ilo,ihi);
-  force->bounds(arg[1],atom->ntypes,jlo,jhi);
+  force->bounds(FLERR,arg[0],atom->ntypes,ilo,ihi);
+  force->bounds(FLERR,arg[1],atom->ntypes,jlo,jhi);
 
   double epsilon_one = force->numeric(FLERR,arg[2]);
   double sigma_one = force->numeric(FLERR,arg[3]);
@@ -514,17 +513,17 @@ void PairLJCutWCA::coeff(int narg, char **arg)
   // WCA scaling for attractive forces
   double lambda_one = lambda_default;
   if( narg >= 5 ) lambda_one = force->numeric(FLERR,arg[4]);
-
+  
   double cut_one = cut_global;
   if (narg == 6) cut_one = force->numeric(FLERR,arg[5]);
- 
+
   int count = 0;
   for (int i = ilo; i <= ihi; i++) {
     for (int j = MAX(jlo,i); j <= jhi; j++) {
       epsilon[i][j] = epsilon_one;
       sigma[i][j] = sigma_one;
-      cut[i][j] = cut_one;
       lambda[i][j] = lambda_one;
+      cut[i][j] = cut_one;
       setflag[i][j] = 1;
       count++;
     }
@@ -548,32 +547,32 @@ void PairLJCutWCA::init_style()
     if (((Respa *) update->integrate)->level_inner >= 0) respa = 1;
     if (((Respa *) update->integrate)->level_middle >= 0) respa = 2;
 
-    if (respa == 0) irequest = neighbor->request(this);
+    if (respa == 0) irequest = neighbor->request(this,instance_me);
     else if (respa == 1) {
-      irequest = neighbor->request(this);
+      irequest = neighbor->request(this,instance_me);
       neighbor->requests[irequest]->id = 1;
       neighbor->requests[irequest]->half = 0;
       neighbor->requests[irequest]->respainner = 1;
-      irequest = neighbor->request(this);
+      irequest = neighbor->request(this,instance_me);
       neighbor->requests[irequest]->id = 3;
       neighbor->requests[irequest]->half = 0;
       neighbor->requests[irequest]->respaouter = 1;
     } else {
-      irequest = neighbor->request(this);
+      irequest = neighbor->request(this,instance_me);
       neighbor->requests[irequest]->id = 1;
       neighbor->requests[irequest]->half = 0;
       neighbor->requests[irequest]->respainner = 1;
-      irequest = neighbor->request(this);
+      irequest = neighbor->request(this,instance_me);
       neighbor->requests[irequest]->id = 2;
       neighbor->requests[irequest]->half = 0;
       neighbor->requests[irequest]->respamiddle = 1;
-      irequest = neighbor->request(this);
+      irequest = neighbor->request(this,instance_me);
       neighbor->requests[irequest]->id = 3;
       neighbor->requests[irequest]->half = 0;
       neighbor->requests[irequest]->respaouter = 1;
     }
 
-  } else irequest = neighbor->request(this);
+  } else irequest = neighbor->request(this,instance_me);
 
   // set rRESPA cutoffs
 
@@ -607,7 +606,6 @@ double PairLJCutWCA::init_one(int i, int j)
                                sigma[i][i],sigma[j][j]);
     sigma[i][j] = mix_distance(sigma[i][i],sigma[j][j]);
     cut[i][j] = mix_distance(cut[i][i],cut[j][j]);
-
     // WCA Scaling for attractive forces
     if( lambda[i][i] != lambda[j][j] ) 
       {
@@ -630,7 +628,7 @@ double PairLJCutWCA::init_one(int i, int j)
 
   if (offset_flag) {
     double ratio = sigma[i][j] / cut[i][j];
-    offset[i][j] = 4.0 * lambda[i][j] * epsilon[i][j] * (pow(ratio,12.0) - pow(ratio,6.0));
+    offset[i][j] = 4.0 * lambda[i][j]* epsilon[i][j] * (pow(ratio,12.0) - pow(ratio,6.0));
   } else offset[i][j] = 0.0;
 
   lj1[j][i] = lj1[i][j];
@@ -638,7 +636,7 @@ double PairLJCutWCA::init_one(int i, int j)
   lj3[j][i] = lj3[i][j];
   lj4[j][i] = lj4[i][j];
   offset[j][i] = offset[i][j];
-  
+
   // check interior rRESPA cutoff
 
   if (cut_respa && cut[i][j] < cut_respa[3])
@@ -688,8 +686,8 @@ void PairLJCutWCA::write_restart(FILE *fp)
       if (setflag[i][j]) {
         fwrite(&epsilon[i][j],sizeof(double),1,fp);
         fwrite(&sigma[i][j],sizeof(double),1,fp);
-	fwrite(&lambda[i][j],sizeof(double),1,fp);        
-	fwrite(&cut[i][j],sizeof(double),1,fp);
+	fwrite(&lambda[i][j],sizeof(double),1,fp);     
+        fwrite(&cut[i][j],sizeof(double),1,fp);
       }
     }
 }
@@ -714,12 +712,12 @@ void PairLJCutWCA::read_restart(FILE *fp)
           fread(&epsilon[i][j],sizeof(double),1,fp);
           fread(&sigma[i][j],sizeof(double),1,fp);
 	  fread(&lambda[i][j],sizeof(double),1,fp);
-          fread(&cut[i][j],sizeof(double),1,fp); 
+          fread(&cut[i][j],sizeof(double),1,fp);
         }
         MPI_Bcast(&epsilon[i][j],1,MPI_DOUBLE,0,world);
         MPI_Bcast(&sigma[i][j],1,MPI_DOUBLE,0,world);
-	MPI_Bcast(&lambda[i][j],1,MPI_DOUBLE,0,world);        
-	MPI_Bcast(&cut[i][j],1,MPI_DOUBLE,0,world);	
+	MPI_Bcast(&lambda[i][j],1,MPI_DOUBLE,0,world); 
+        MPI_Bcast(&cut[i][j],1,MPI_DOUBLE,0,world);
       }
     }
 }
@@ -762,7 +760,7 @@ void PairLJCutWCA::read_restart_settings(FILE *fp)
 void PairLJCutWCA::write_data(FILE *fp)
 {
   for (int i = 1; i <= atom->ntypes; i++)
-    fprintf(fp,"%d %g %g %g\n",i,epsilon[i][i],sigma[i][i],lambda[i][i]);
+      fprintf(fp,"%d %g %g %g\n",i,epsilon[i][i],sigma[i][i],lambda[i][i]);
 }
 
 /* ----------------------------------------------------------------------
@@ -773,7 +771,7 @@ void PairLJCutWCA::write_data_all(FILE *fp)
 {
   for (int i = 1; i <= atom->ntypes; i++)
     for (int j = i; j <= atom->ntypes; j++)
-      fprintf(fp,"%d %d %g %g %g %g\n",i,j,epsilon[i][j],sigma[i][j],cut[i][j],lambda[i][j]);
+	fprintf(fp,"%d %d %g %g %g %g\n",i,j,epsilon[i][j],sigma[i][j],cut[i][j],lambda[i][j]);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -787,6 +785,7 @@ double PairLJCutWCA::single(int i, int j, int itype, int jtype, double rsq,
   r2inv = 1.0/rsq;
   r6inv = r2inv*r2inv*r2inv;
   forcelj = r6inv * (lj1[itype][jtype]*r6inv - lj2[itype][jtype]);
+
   // WCA scaling for attractive force
   if( rsq >= scaling_rcutsq[itype][jtype] )
     forcelj *= lambda[itype][jtype];
@@ -794,12 +793,13 @@ double PairLJCutWCA::single(int i, int j, int itype, int jtype, double rsq,
   fforce = factor_lj*forcelj*r2inv;
 
   philj = r6inv*(lj3[itype][jtype]*r6inv-lj4[itype][jtype]);
+  
   // WCA scaling for attractive force
   if( rsq >= scaling_rcutsq[itype][jtype] )
     philj *= lambda[itype][jtype];
   else
     philj += (1 - lambda[itype][jtype])*epsilon[itype][jtype];
-  
+      
   philj -= offset[itype][jtype];
   return factor_lj*philj;
 }
