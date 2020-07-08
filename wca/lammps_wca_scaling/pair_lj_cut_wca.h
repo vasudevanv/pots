@@ -1,4 +1,4 @@
-/* ----------------------------------------------------------------------
+/* -*- c++ -*- ----------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    http://lammps.sandia.gov, Sandia National Laboratories
    Steve Plimpton, sjplimp@sandia.gov
@@ -13,7 +13,7 @@
 
 #ifdef PAIR_CLASS
 
-PairStyle(lj/cut/wca,PairLJCutWCA)
+PairStyle(lj/cut,PairLJCutWCA)
 
 #else
 
@@ -59,8 +59,8 @@ class PairLJCutWCA : public Pair {
   double **lambda;
   double **scaling_rcut;
   double **scaling_rcutsq;
-
-  void allocate();
+    
+  virtual void allocate();
 };
 
 }

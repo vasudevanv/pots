@@ -13,7 +13,7 @@
 
 #ifdef PAIR_CLASS
 
-PairStyle(lj/cut/coul/long/wca,PairLJCutCoulLongWCA)
+PairStyle(lj/cut/coul/long,PairLJCutCoulLongWCA)
 
 #else
 
@@ -63,9 +63,8 @@ class PairLJCutCoulLongWCA : public Pair {
   double **lambda;
   double **scaling_rcut;
   double **scaling_rcutsq;
-
-
-  void allocate();
+  
+  virtual void allocate();
 };
 
 }
